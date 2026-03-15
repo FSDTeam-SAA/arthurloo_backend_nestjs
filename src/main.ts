@@ -22,7 +22,12 @@ async function bootstrap() {
     exclude: [''],
   });
 
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+    }),
+  );
   app.useGlobalInterceptors(new UtilsInterceptor());
   const httpAdapterHost = app.get(HttpAdapterHost);
   app.useGlobalFilters(new GlobalExceptionFilter(httpAdapterHost));
@@ -32,25 +37,32 @@ async function bootstrap() {
     .setDescription('Arthurloo API Documentation')
     .setVersion('1.0')
     .addTag('arthurloo')
-    .addBearerAuth({
-      type: 'http',
-      scheme: 'bearer',
-      bearerFormat: 'JWT',
-      name: 'Authorization',
-      description: 'Enter your JWT token',
-      in: 'header',
-    })
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        description: 'Enter your JWT token',
+        in: 'header',
+      },
+      'access-token',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/v1/docs', app, document);
+  SwaggerModule.setup('api/v1/docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
 
   await app.listen(process.env.PORT ?? 3000, () => {
     console.log(
       `Server is running on port http://localhost:${process.env.PORT ?? 3000}`,
     );
     console.log(
-      `Swagger documentation is available at http://localhost:${process.env.PORT ?? 3000}/api/v1/docs`,
+      `Swagger URL: http://localhost:${process.env.PORT ?? 3000}/api/v1/docs`,
     );
   });
 }

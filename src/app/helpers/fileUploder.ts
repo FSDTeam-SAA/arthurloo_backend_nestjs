@@ -13,9 +13,9 @@ cloudinary.config({
 
 const uploadConfig = {
   storage: memoryStorage(),
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10 MB
-  },
+  // limits: {
+  //   fileSize: 10 * 1024 * 1024, // 10 MB
+  // },
 };
 
 const uploadToCloudinary = async (

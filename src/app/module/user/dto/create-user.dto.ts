@@ -8,21 +8,22 @@ import {
   IsDateString,
   IsBoolean,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateUserDto {
-  @ApiProperty({ example: 'John' })
+  @ApiProperty({ example: '' })
   @IsString()
   firstName: string;
 
-  @ApiProperty({ example: 'Doe' })
+  @ApiProperty({ example: '' })
   @IsString()
   lastName: string;
 
-  @ApiProperty({ example: 'john@example.com' })
+  @ApiProperty({ example: '' })
   @IsEmail()
   email: string;
 
-  @ApiProperty({ example: 'password123' })
+  @ApiProperty({ example: '' })
   @IsString()
   @MinLength(6)
   password: string;
@@ -37,17 +38,17 @@ export class CreateUserDto {
   @IsEnum(['male', 'female'])
   gender?: string;
 
-  @ApiPropertyOptional({ example: '+8801712345678' })
+  @ApiPropertyOptional({ example: '' })
   @IsOptional()
   @IsString()
   phoneNumber?: string;
 
-  @ApiPropertyOptional({ example: 'I am a mathematics teacher.' })
+  @ApiPropertyOptional({ example: '' })
   @IsOptional()
   @IsString()
   bio?: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com/profile.jpg' })
+  @ApiPropertyOptional({ example: '' })
   @IsOptional()
   @IsString()
   profilePicture?: string;
@@ -57,17 +58,17 @@ export class CreateUserDto {
   @IsEnum(['panding', 'active', 'block'])
   status?: string;
 
-  @ApiPropertyOptional({ example: '2000-05-10' })
+  @ApiPropertyOptional({ example: '' })
   @IsOptional()
   @IsDateString()
   dateOfBirth?: Date;
 
-  @ApiPropertyOptional({ example: 'Dhaka High School' })
+  @ApiPropertyOptional({ example: '' })
   @IsOptional()
   @IsString()
   schoolAddress?: string;
 
-  @ApiPropertyOptional({ example: 'Father' })
+  @ApiPropertyOptional({ example: '' })
   @IsOptional()
   @IsString()
   relationship?: string;
@@ -81,12 +82,18 @@ export class CreateUserDto {
   @IsOptional()
   otpExpiry?: Date;
 
-  @ApiPropertyOptional({ example: false })
-  @IsOptional()
+  @ApiPropertyOptional()
   @IsBoolean()
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.toLowerCase() === 'true';
+    }
+    return value;
+  })
   verifiedForget?: boolean;
 
-  @ApiPropertyOptional({ example: 'acct_123456789' })
+  @ApiPropertyOptional({ example: '' })
   @IsOptional()
   @IsString()
   stripeAccountId?: string;

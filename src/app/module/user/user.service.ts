@@ -1,26 +1,148 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { User, UserDocument } from './entities/user.entity';
+import { Model } from 'mongoose';
+import { fileUpload } from 'src/app/helpers/fileUploder';
+import { IFilterParams } from 'src/app/helpers/pick';
+import paginationHelper, { IOptions } from 'src/app/helpers/pagenation';
 
 @Injectable()
 export class UserService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  constructor(
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+  ) {}
+
+  async createUser(createUserDto: CreateUserDto, file?: Express.Multer.File) {
+    const user = await this.userModel.findOne({ email: createUserDto.email });
+    if (user) {
+      throw new HttpException('User already exists', 400);
+    }
+    if (file) {
+      const uploadedFile = await fileUpload.uploadToCloudinary(file);
+      createUserDto.profilePicture = uploadedFile.url;
+    }
+    const createdUser = await this.userModel.create(createUserDto);
+    return createdUser;
   }
 
-  findAll() {
-    return `This action returns all user`;
+  async getAllUser(params: IFilterParams, options: IOptions) {
+    const { limit, page, skip, sortBy, sortOrder } = paginationHelper(options);
+    const { searchTerm, ...filterData } = params;
+
+    const searchAbleFields = [
+      'firstName',
+      'lastName',
+      'email',
+      'role',
+      'gender',
+      'phoneNumber',
+      'bio',
+      'schoolAddress',
+      'relationship',
+      'status',
+    ];
+    const andConditions: any[] = [];
+
+    if (searchTerm) {
+      andConditions.push({
+        $or: searchAbleFields.map((field) => ({
+          [field]: { $regex: searchTerm, $options: 'i' },
+        })),
+      });
+    }
+
+    if (Object.keys(filterData).length > 0) {
+      andConditions.push({
+        $and: Object.entries(filterData).map(([key, value]) => ({
+          [key]: value,
+        })),
+      });
+    }
+
+    const whereConditions =
+      andConditions.length > 0 ? { $and: andConditions } : {};
+
+    const total = await this.userModel.countDocuments(whereConditions);
+    const users = await this.userModel
+      .find(whereConditions)
+      .skip(skip)
+      .limit(limit)
+      .sort({ [sortBy]: sortOrder } as any);
+
+    return {
+      meta: {
+        page,
+        limit,
+        total,
+      },
+      data: users,
+    };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async getSingleUser(id: string) {
+    const user = await this.userModel.findById(id);
+    if (!user) {
+      throw new HttpException('User not found', 404);
+    }
+    return user;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async updateUser(
+    id: string,
+    updateUserDto: UpdateUserDto,
+    file?: Express.Multer.File,
+  ) {
+    const user = await this.userModel.findById(id);
+    if (!user) {
+      throw new HttpException('User not found', 404);
+    }
+    if (file) {
+      const uploadedFile = await fileUpload.uploadToCloudinary(file);
+      updateUserDto.profilePicture = uploadedFile.url;
+    }
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      id,
+      updateUserDto,
+      { new: true },
+    );
+    return updatedUser;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async deleteUser(id: string) {
+    const user = await this.userModel.findById(id);
+    if (!user) {
+      throw new HttpException('User not found', 404);
+    }
+    const result = await this.userModel.findByIdAndDelete(id);
+    return result;
+  }
+
+  async getProfile(id: string) {
+    const result = await this.userModel.findById(id);
+    if (!result) {
+      throw new HttpException('User not found', 404);
+    }
+    return result;
+  }
+
+  async updateMyProfile(
+    id: string,
+    updateUserDto: UpdateUserDto,
+    file?: Express.Multer.File,
+  ) {
+    const user = await this.userModel.findById(id);
+    if (!user) {
+      throw new HttpException('User not found', 404);
+    }
+    if (file) {
+      const uploadedFile = await fileUpload.uploadToCloudinary(file);
+      updateUserDto.profilePicture = uploadedFile.url;
+    }
+    const result = await this.userModel.findByIdAndUpdate(id, updateUserDto, {
+      new: true,
+    });
+    return result;
   }
 }

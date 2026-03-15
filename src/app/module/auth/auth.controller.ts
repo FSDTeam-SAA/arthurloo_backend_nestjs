@@ -36,6 +36,7 @@ export class AuthController {
     };
   }
 
+  @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() createAuthDto: LoginAuthDto,
