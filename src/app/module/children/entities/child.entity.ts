@@ -99,6 +99,7 @@ export class Child {
   fineMotorLevel: string;
 
   @Prop({
+    _id: false,
     type: {
       value: { type: Number },
       unit: { type: String },
@@ -110,6 +111,7 @@ export class Child {
   };
 
   @Prop({
+    _id: false,
     type: {
       value: { type: Number },
       unit: { type: String },

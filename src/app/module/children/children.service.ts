@@ -8,6 +8,48 @@ import { User, UserDocument } from '../user/entities/user.entity';
 import { fileUpload } from 'src/app/helpers/fileUploder';
 import { IFilterParams } from 'src/app/helpers/pick';
 import paginationHelper, { IOptions } from 'src/app/helpers/pagenation';
+import buildWhereConditions from 'src/app/helpers/buildWhereConditions';
+
+const childSearchAbleFields = [
+  'firstName',
+  'lastName',
+  'age',
+  'gender',
+  'schoolName',
+  'class',
+  'nickName',
+  'primaryLanguage',
+  'homeLanguage',
+  'serviceStage',
+  'currentPlanType',
+  'topPriority',
+  'studentId',
+];
+
+const parseChildMeasurements = (payload: CreateChildDto | UpdateChildDto) => {
+  for (const key of ['height', 'weight'] as const) {
+    const value = payload[key];
+
+    if (!value) {
+      continue;
+    }
+
+    const parsedValue =
+      typeof value === 'string' ? JSON.parse(value) : value;
+
+    if (
+      parsedValue &&
+      typeof parsedValue === 'object' &&
+      !Array.isArray(parsedValue)
+    ) {
+      const { _id, ...rest } = parsedValue as Record<string, unknown>;
+      payload[key] = rest as typeof payload[typeof key];
+      continue;
+    }
+
+    payload[key] = parsedValue as typeof payload[typeof key];
+  }
+};
 
 @Injectable()
 export class ChildrenService {
@@ -15,54 +57,6 @@ export class ChildrenService {
     @InjectModel(Child.name) private readonly childModel: Model<ChildDocument>,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {}
-
-  private buildChildWhereConditions(
-    params: IFilterParams,
-    extraConditions: Record<string, unknown> = {},
-  ) {
-    const { searchTerm, ...filterData } = params;
-    const andConditions: any[] = [];
-    const searchAbleFields = [
-      'firstName',
-      'lastName',
-      'age',
-      'gender',
-      'schoolName',
-      'class',
-      'nickName',
-      'primaryLanguage',
-      'homeLanguage',
-      'serviceStage',
-      'currentPlanType',
-      'topPriority',
-      'studentId',
-    ];
-
-    if (searchTerm) {
-      andConditions.push({
-        $or: searchAbleFields.map((field) => ({
-          [field]: {
-            $regex: searchTerm,
-            $options: 'i',
-          },
-        })),
-      });
-    }
-
-    if (Object.keys(filterData).length > 0) {
-      andConditions.push({
-        $and: Object.entries(filterData).map(([key, value]) => ({
-          [key]: value,
-        })),
-      });
-    }
-
-    if (Object.keys(extraConditions).length > 0) {
-      andConditions.push(extraConditions);
-    }
-
-    return andConditions.length > 0 ? { $and: andConditions } : {};
-  }
 
   async addChildrient(
     parentId: string,
@@ -89,13 +83,8 @@ export class ChildrenService {
     }
 
     createChildDto.studentId = `STU-${nextId}`;
+    parseChildMeasurements(createChildDto);
 
-    if (typeof createChildDto.height === 'string') {
-      createChildDto.height = JSON.parse(createChildDto.height);
-    }
-    if (typeof createChildDto.weight === 'string') {
-      createChildDto.weight = JSON.parse(createChildDto.weight);
-    }
     const result = await this.childModel.create({
       ...createChildDto,
       parentId: parent._id,
@@ -106,7 +95,10 @@ export class ChildrenService {
 
   async getAllChildren(params: IFilterParams, options: IOptions) {
     const { limit, page, skip, sortBy, sortOrder } = paginationHelper(options);
-    const whereConditions = this.buildChildWhereConditions(params);
+    const whereConditions = buildWhereConditions(
+      params,
+      childSearchAbleFields,
+    );
 
     const result = await this.childModel
       .find(whereConditions)
@@ -144,7 +136,11 @@ export class ChildrenService {
     options: IOptions,
   ) {
     const { limit, page, skip, sortBy, sortOrder } = paginationHelper(options);
-    const whereConditions = this.buildChildWhereConditions(params, { parentId });
+    const whereConditions = buildWhereConditions(
+      params,
+      childSearchAbleFields,
+      { parentId },
+    );
 
     const result = await this.childModel
       .find(whereConditions)
@@ -182,16 +178,17 @@ export class ChildrenService {
       updateChildDto.profilePicture = uploadedFile.url;
     }
 
-    if (typeof updateChildDto.height === 'string') {
-      updateChildDto.height = JSON.parse(updateChildDto.height);
-    }
-    if (typeof updateChildDto.weight === 'string') {
-      updateChildDto.weight = JSON.parse(updateChildDto.weight);
-    }
+    parseChildMeasurements(updateChildDto);
 
     const result = await this.childModel.findOneAndUpdate(
       whereConditions,
-      updateChildDto,
+      {
+        $set: updateChildDto,
+        $unset: {
+          'height._id': 1,
+          'weight._id': 1,
+        },
+      },
       {
         new: true,
       },
