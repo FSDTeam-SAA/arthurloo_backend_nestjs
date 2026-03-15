@@ -5,6 +5,8 @@ import { UserModule } from './app/module/user/user.module';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './app/module/auth/auth.module';
+import { ParentsModule } from './app/module/parents/parents.module';
+import { ChildrenModule } from './app/module/children/children.module';
 import config from './app/module/config';
 
 @Module({
@@ -13,6 +15,8 @@ import config from './app/module/config';
     ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRoot(config.mongoUri as string),
     AuthModule,
+    ParentsModule,
+    ChildrenModule,
   ],
   controllers: [AppController],
   providers: [AppService],
