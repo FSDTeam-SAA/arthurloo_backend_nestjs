@@ -7,6 +7,20 @@ import { Model } from 'mongoose';
 import { fileUpload } from 'src/app/helpers/fileUploder';
 import { IFilterParams } from 'src/app/helpers/pick';
 import paginationHelper, { IOptions } from 'src/app/helpers/pagenation';
+import buildWhereConditions from 'src/app/helpers/buildWhereConditions';
+
+const userSearchAbleFields = [
+  'firstName',
+  'lastName',
+  'email',
+  'role',
+  'gender',
+  'phoneNumber',
+  'bio',
+  'schoolAddress',
+  'relationship',
+  'status',
+];
 
 @Injectable()
 export class UserService {
@@ -29,40 +43,7 @@ export class UserService {
 
   async getAllUser(params: IFilterParams, options: IOptions) {
     const { limit, page, skip, sortBy, sortOrder } = paginationHelper(options);
-    const { searchTerm, ...filterData } = params;
-
-    const searchAbleFields = [
-      'firstName',
-      'lastName',
-      'email',
-      'role',
-      'gender',
-      'phoneNumber',
-      'bio',
-      'schoolAddress',
-      'relationship',
-      'status',
-    ];
-    const andConditions: any[] = [];
-
-    if (searchTerm) {
-      andConditions.push({
-        $or: searchAbleFields.map((field) => ({
-          [field]: { $regex: searchTerm, $options: 'i' },
-        })),
-      });
-    }
-
-    if (Object.keys(filterData).length > 0) {
-      andConditions.push({
-        $and: Object.entries(filterData).map(([key, value]) => ({
-          [key]: value,
-        })),
-      });
-    }
-
-    const whereConditions =
-      andConditions.length > 0 ? { $and: andConditions } : {};
+    const whereConditions = buildWhereConditions(params, userSearchAbleFields);
 
     const total = await this.userModel.countDocuments(whereConditions);
     const users = await this.userModel

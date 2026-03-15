@@ -1,27 +1,14 @@
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import {
   IsArray,
-  IsDate,
   IsMongoId,
-  IsNumber,
+  IsObject,
   IsOptional,
   IsString,
-  ValidateNested,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
-const emptyStringToUndefined = ({ value }: { value: unknown }) =>
-  value === '' || value === null ? undefined : value;
-
-const parseDateValue = ({ value }: { value: unknown }) => {
-  if (value === '' || value === null || value === undefined) {
-    return undefined;
-  }
-
-  return value instanceof Date ? value : new Date(String(value));
-};
-
-const parseStringArray = ({ value }: { value: unknown }) => {
+const parseOptionalArray = ({ value }: { value: unknown }) => {
   if (value === '' || value === null || value === undefined) {
     return undefined;
   }
@@ -47,7 +34,7 @@ const parseStringArray = ({ value }: { value: unknown }) => {
   return value;
 };
 
-const parseMeasurement = ({ value }: { value: unknown }) => {
+const parseOptionalObject = ({ value }: { value: unknown }) => {
   if (value === '' || value === null || value === undefined) {
     return undefined;
   }
@@ -64,299 +51,216 @@ const parseMeasurement = ({ value }: { value: unknown }) => {
 };
 
 class MeasurementDto {
-  @ApiPropertyOptional({ example: 120, description: 'Measurement value' })
-  @Type(() => Number)
-  @IsNumber()
-  @IsOptional()
+  @ApiPropertyOptional({ example: 120 })
   value?: number;
 
-  @ApiPropertyOptional({ example: 'cm', description: 'Measurement unit' })
-  @Transform(emptyStringToUndefined)
-  @IsString()
-  @IsOptional()
+  @ApiPropertyOptional({ example: 'cm' })
   unit?: string;
 }
 
 export class CreateChildDto {
-  @ApiPropertyOptional({
-    example: '67c8db1f2b5d8c6d1f123456',
-    description: 'Teacher id',
-  })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: '67c8db1f2b5d8c6d1f123456' })
   @IsMongoId()
   @IsOptional()
   teacherId?: string;
 
-  @ApiPropertyOptional({ example: 'Liam', description: 'Child first name' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Liam' })
   @IsString()
   @IsOptional()
   firstName?: string;
 
-  @ApiPropertyOptional({ example: 'Noah', description: 'Child last name' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Noah' })
   @IsString()
   @IsOptional()
   lastName?: string;
 
-  @ApiPropertyOptional({ example: '7', description: 'Child age' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: '7' })
   @IsString()
   @IsOptional()
   age?: string;
 
-  @ApiPropertyOptional({
-    example: 'male',
-    description: 'Child gender',
-    enum: ['male', 'female', 'other'],
-  })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'male' })
   @IsString()
   @IsOptional()
   gender?: string;
 
-  @ApiPropertyOptional({
-    type: 'string',
-    format: 'date-time',
-    example: '2018-05-10T00:00:00.000Z',
-    description: 'Date of birth',
-  })
-  @Transform(parseDateValue)
-  @IsDate()
+  @ApiPropertyOptional({ example: '2018-05-10T00:00:00.000Z' })
+  @IsString()
   @IsOptional()
-  datoOfBirth?: Date;
+  datoOfBirth?: string;
 
-  @ApiPropertyOptional({ example: 'Greenfield School', description: 'School name' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Greenfield School' })
   @IsString()
   @IsOptional()
   schoolName?: string;
 
-  @ApiPropertyOptional({ example: 'Grade 2', description: 'Current class' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Grade 2' })
   @IsString()
   @IsOptional()
   class?: string;
 
-  @ApiPropertyOptional({
-    type: 'string',
-    format: 'binary',
-    description: 'Profile picture file',
-  })
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
   @IsOptional()
   profilePicture?: string;
 
-  @ApiPropertyOptional({ example: 'Leo', description: 'Nick name' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Leo' })
   @IsString()
   @IsOptional()
   nickName?: string;
 
-  @ApiPropertyOptional({ example: 'English', description: 'Primary language' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'English' })
   @IsString()
   @IsOptional()
   primaryLanguage?: string;
 
-  @ApiPropertyOptional({ example: 'Bangla', description: 'Home language' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Bangla' })
   @IsString()
   @IsOptional()
   homeLanguage?: string;
 
-  @ApiPropertyOptional({ example: 'Assessment', description: 'Service stage' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Assessment' })
   @IsString()
   @IsOptional()
   serviceStage?: string;
 
-  @ApiPropertyOptional({
-    type: 'string',
-    format: 'date-time',
-    example: '2025-01-10T00:00:00.000Z',
-    description: 'Service start date',
-  })
-  @Transform(parseDateValue)
-  @IsDate()
+  @ApiPropertyOptional({ example: '2025-01-10T00:00:00.000Z' })
+  @IsString()
   @IsOptional()
-  startServiceDate?: Date;
+  startServiceDate?: string;
 
-  @ApiPropertyOptional({ example: 'Premium', description: 'Current plan type' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Premium' })
   @IsString()
   @IsOptional()
   currentPlanType?: string;
 
-  @ApiPropertyOptional({ example: 'Speech support', description: 'Top priority' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Speech support' })
   @IsString()
   @IsOptional()
   topPriority?: string;
 
-  @ApiPropertyOptional({ example: 'Puzzle solving', description: 'Child strength' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Puzzle solving' })
   @IsString()
   @IsOptional()
   strength?: string;
 
-  @ApiPropertyOptional({ example: 'Difficulty with transitions', description: 'Parent concerns' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Difficulty with transitions' })
   @IsString()
   @IsOptional()
   concerns?: string;
 
-  @ApiPropertyOptional({
-    example: ['Sticker', 'Music'],
-    description: 'Preferred reinforcers',
-    type: [String],
-  })
-  @Transform(parseStringArray)
+  @ApiPropertyOptional({ type: [String], example: ['Sticker', 'Music'] })
+  @Transform(parseOptionalArray)
   @IsArray()
-  @IsString({ each: true })
   @IsOptional()
   preferredReinforcers?: string[];
 
-  @ApiPropertyOptional({
-    example: ['Loud noise', 'Crowded places'],
-    description: 'Known triggers',
-    type: [String],
-  })
-  @Transform(parseStringArray)
+  @ApiPropertyOptional({ type: [String], example: ['Loud noise', 'Crowded places'] })
+  @Transform(parseOptionalArray)
   @IsArray()
-  @IsString({ each: true })
   @IsOptional()
   knownTrigger?: string[];
 
-  @ApiPropertyOptional({
-    example: ['Verbal', 'PECS'],
-    description: 'Communication modes',
-    type: [String],
-  })
-  @Transform(parseStringArray)
+  @ApiPropertyOptional({ type: [String], example: ['Verbal', 'PECS'] })
+  @Transform(parseOptionalArray)
   @IsArray()
-  @IsString({ each: true })
   @IsOptional()
   communicationMode?: string[];
 
-  @ApiPropertyOptional({
-    example: ['Elopement risk'],
-    description: 'Safety alerts',
-    type: [String],
-  })
-  @Transform(parseStringArray)
+  @ApiPropertyOptional({ type: [String], example: ['Elopement risk'] })
+  @Transform(parseOptionalArray)
   @IsArray()
-  @IsString({ each: true })
   @IsOptional()
   safetyAlerts?: string[];
 
-  @ApiPropertyOptional({ example: 'Moderate', description: 'Emotional level' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Moderate' })
   @IsString()
   @IsOptional()
   emotionalLevel?: string;
 
-  @ApiPropertyOptional({ example: 'Needs support', description: 'Sensory regulation level' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Needs support' })
   @IsString()
   @IsOptional()
   sensoryRegulationLevel?: string;
 
-  @ApiPropertyOptional({ example: 'Emerging', description: 'Social level' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Emerging' })
   @IsString()
   @IsOptional()
   socialLevel?: string;
 
-  @ApiPropertyOptional({ example: 'Functional', description: 'Communication level' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Functional' })
   @IsString()
   @IsOptional()
   communicationLevel?: string;
 
-  @ApiPropertyOptional({ example: 'Age appropriate', description: 'Cognitive level' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Age appropriate' })
   @IsString()
   @IsOptional()
   cognitiveLevel?: string;
 
-  @ApiPropertyOptional({ example: 'Needs prompts', description: 'Self care level' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Needs prompts' })
   @IsString()
   @IsOptional()
   selfcareLevel?: string;
 
-  @ApiPropertyOptional({ example: 'Good balance', description: 'Gross motor level' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Good balance' })
   @IsString()
   @IsOptional()
   grossMotorLevel?: string;
 
-  @ApiPropertyOptional({ example: 'Improving grip', description: 'Fine motor level' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Improving grip' })
   @IsString()
   @IsOptional()
   fineMotorLevel?: string;
 
   @ApiPropertyOptional({
-    description: 'Height object',
     type: MeasurementDto,
     example: { value: 120, unit: 'cm' },
   })
-  @Transform(parseMeasurement)
-  @Type(() => MeasurementDto)
-  @ValidateNested()
+  @Transform(parseOptionalObject)
+  @IsObject()
   @IsOptional()
   height?: MeasurementDto;
 
   @ApiPropertyOptional({
-    description: 'Weight object',
     type: MeasurementDto,
     example: { value: 22, unit: 'kg' },
   })
-  @Transform(parseMeasurement)
-  @Type(() => MeasurementDto)
-  @ValidateNested()
+  @Transform(parseOptionalObject)
+  @IsObject()
   @IsOptional()
   weight?: MeasurementDto;
 
-  @ApiPropertyOptional({ example: 'Peanut', description: 'Allergies' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Peanut' })
   @IsString()
   @IsOptional()
   allergies?: string;
 
-  @ApiPropertyOptional({ example: 'No dairy', description: 'Dietary restrictions' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'No dairy' })
   @IsString()
   @IsOptional()
   dieteryRestrictions?: string;
 
-  @ApiPropertyOptional({ example: 'Needs supervision during meals', description: 'Eating notes' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Needs supervision during meals' })
   @IsString()
   @IsOptional()
   eatingNotes?: string;
 
-  @ApiPropertyOptional({ example: 'Vitamin D', description: 'Medications' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Vitamin D' })
   @IsString()
   @IsOptional()
   medications?: string;
 
-  @ApiPropertyOptional({ example: 'Carries inhaler', description: 'Medical notes' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Carries inhaler' })
   @IsString()
   @IsOptional()
   medicalNotes?: string;
 
-  @ApiPropertyOptional({ example: 'Asthma', description: 'Medical history' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'Asthma' })
   @IsString()
   @IsOptional()
   medicalHistory?: string;
 
-  @ApiPropertyOptional({ example: 'STD-1001', description: 'Student id' })
-  @Transform(emptyStringToUndefined)
+  @ApiPropertyOptional({ example: 'STU-1001' })
   @IsString()
   @IsOptional()
   studentId?: string;
