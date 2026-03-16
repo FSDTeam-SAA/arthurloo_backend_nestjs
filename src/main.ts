@@ -51,7 +51,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/v1/docs', app, document, {
+  SwaggerModule.setup('api/docs', app, document, {
     swaggerOptions: {
       persistAuthorization: true,
     },
@@ -62,7 +62,7 @@ async function bootstrap() {
       `Server is running on port http://localhost:${process.env.PORT ?? 3000}`,
     );
     console.log(
-      `Swagger URL: http://localhost:${process.env.PORT ?? 3000}/api/v1/docs`,
+      `Swagger URL: http://localhost:${process.env.PORT ?? 3000}/api/docs`,
     );
   });
 }
