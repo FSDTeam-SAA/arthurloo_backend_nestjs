@@ -73,7 +73,19 @@ export class ShearChildService {
       .find(whereConditions)
       .skip(skip)
       .limit(limit)
-      .sort({ [sortBy]: sortOrder } as any);
+      .sort({ [sortBy]: sortOrder } as any)
+      .populate({
+        path: 'childId',
+        select: 'firstName lastName email',
+      })
+      .populate({
+        path: 'parentId',
+        select: 'firstName lastName email profileImage',
+      })
+      .populate({
+        path: 'teacherId',
+        select: 'firstName lastName email profileImage',
+      });
 
     const total = await this.shearChildModel.countDocuments(whereConditions);
 
@@ -88,7 +100,20 @@ export class ShearChildService {
   }
 
   async getSingleShearChild(id: string) {
-    const result = await this.shearChildModel.findById(id);
+    const result = await this.shearChildModel
+      .findById(id)
+      .populate({
+        path: 'childId',
+        select: 'firstName lastName email',
+      })
+      .populate({
+        path: 'parentId',
+        select: 'firstName lastName email profileImage',
+      })
+      .populate({
+        path: 'teacherId',
+        select: 'firstName lastName email profileImage',
+      });
     if (!result) {
       throw new BadRequestException('Shear child not found');
     }
