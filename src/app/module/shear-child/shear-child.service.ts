@@ -44,6 +44,9 @@ export class ShearChildService {
     if (!child) {
       throw new BadRequestException('Child not found');
     }
+
+    // send email to teacher
+
     const shearChild = new this.shearChildModel({
       teacherId: teacher._id,
       childId: child._id,
@@ -145,6 +148,7 @@ export class ShearChildService {
     if (!result) {
       throw new BadRequestException('Shear child not found');
     }
+    // send email to parent
     return result;
   }
 
