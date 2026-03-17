@@ -9,9 +9,13 @@ import {
   Get,
   Param,
   Put,
+  Delete,
 } from '@nestjs/common';
 import { ShearChildService } from './shear-child.service';
-import { CreateShearChildDto, UpdateShearChildStatusDto } from './dto/create-shear-child.dto';
+import {
+  CreateShearChildDto,
+  UpdateShearChildStatusDto,
+} from './dto/create-shear-child.dto';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -132,8 +136,6 @@ export class ShearChildController {
     };
   }
 
-  
-
   @Put(':id/status')
   @ApiOperation({
     summary: 'Update a single shear child status',
@@ -152,6 +154,21 @@ export class ShearChildController {
     );
     return {
       message: 'Shear child updated successfully',
+      data: result,
+    };
+  }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete a single shear child',
+  })
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard('teacher'))
+  @HttpCode(HttpStatus.OK)
+  async deleteShearChild(@Param('id') id: string) {
+    const result = await this.shearChildService.deleteShearChild(id);
+    return {
+      message: 'Shear child deleted successfully',
       data: result,
     };
   }
