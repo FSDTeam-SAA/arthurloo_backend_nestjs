@@ -123,6 +123,27 @@ export class ShearChildController {
     };
   }
 
+  @Put('add-student/:studentId')
+  @ApiOperation({
+    summary: 'Add student to shear child',
+  })
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard('teacher'))
+  @HttpCode(HttpStatus.OK)
+  async addStudentToShearChild(
+    @Req() req: Request,
+    @Param('studentId') studentId: string,
+  ) {
+    const result = await this.shearChildService.addStudentToShearChild(
+      req.user!.id,
+      studentId,
+    );
+    return {
+      message: 'Shear child approved successfully',
+      data: result,
+    };
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Get a single shear child',
