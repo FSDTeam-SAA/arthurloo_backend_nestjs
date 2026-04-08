@@ -1,4 +1,3 @@
-
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 
@@ -119,7 +118,7 @@ class ArtsAbility {
 }
 
 class Module3Summary {
-  strengthsNotableAbilities!: string; 
+  strengthsNotableAbilities!: string;
   areasNeedingSupport!: string;
   domainSummary!: string;
   recommendedFocusAreas!: string[];
@@ -177,10 +176,16 @@ export class Child {
   @Prop() grossMotorLevel!: string;
   @Prop() fineMotorLevel!: string;
 
-  @Prop({ _id: false, type: { value: { type: Number }, unit: { type: String } } })
+  @Prop({
+    _id: false,
+    type: { value: { type: Number }, unit: { type: String } },
+  })
   height!: Measurement;
 
-  @Prop({ _id: false, type: { value: { type: Number }, unit: { type: String } } })
+  @Prop({
+    _id: false,
+    type: { value: { type: Number }, unit: { type: String } },
+  })
   weight!: Measurement;
 
   @Prop() allergies!: string;
@@ -199,6 +204,9 @@ export class Child {
   @Prop({ type: Object })
   module1Summary!: Module1Summary;
 
+  @Prop({ default: null })
+  module1MainRunId!: string;
+
   // ── Module 2: Learning Style ───────────────────────────────────────────────
 
   @Prop({ type: Object })
@@ -215,6 +223,9 @@ export class Child {
 
   @Prop({ type: Object })
   module2Summary!: Module2Summary;
+
+  @Prop({ default: null })
+  module2AiRunId!: string;
 
   // ── Module 3: Comprehensive Ability Assessment ─────────────────────────────
 
