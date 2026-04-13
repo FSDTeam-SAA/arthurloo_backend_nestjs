@@ -9,6 +9,7 @@ import * as bcrypt from 'bcrypt';
 import * as jwt from '@nestjs/jwt';
 import config from '../config';
 import sendMailer from 'src/app/helpers/sendMailer';
+import { UserRole, UserStatus } from '../user/user.constants';
 
 @Injectable()
 export class AuthService {
@@ -17,17 +18,37 @@ export class AuthService {
     private readonly jwtService: jwt.JwtService,
   ) {}
 
-  async register(CreateAuthDto: CreateAuthDto) {
-    const user = await this.userModel.findOne({ email: CreateAuthDto.email });
-    if (user) {
+  async register(createAuthDto: CreateAuthDto) {
+    const existingUser = await this.userModel.findOne({
+      email: createAuthDto.email,
+    });
+
+    if (existingUser) {
       throw new HttpException('User already exists', 400);
     }
-    const newUser = await this.userModel.create(CreateAuthDto);
+
+    let status = UserStatus.ACTIVE;
+
+    if (
+      createAuthDto.role === UserRole.TEACHER ||
+      createAuthDto.role === UserRole.PARENT
+    ) {
+      status = UserStatus.PENDING;
+    }
+
+    const newUser = await this.userModel.create({
+      ...createAuthDto,
+      status,
+    });
+
     return newUser;
   }
 
   async login(loginDto: { email: string; password: string }, res: Response) {
-    const user = await this.userModel.findOne({ email: loginDto.email }).select('+password');
+    const user = await this.userModel
+      .findOne({ email: loginDto.email })
+      .select('+password');
+
     if (!user) {
       throw new HttpException('User not found', 404);
     }
@@ -36,33 +57,34 @@ export class AuthService {
       loginDto.password,
       user.password,
     );
+
     if (!isPasswordMatch) {
       throw new HttpException('Incorrect password', 401);
     }
 
-    if (user.status === 'pending')
+    if (user.status === UserStatus.PENDING) {
       throw new HttpException(
-        'You are not approved alrady pending please contact admin',
+        'Your account is still pending approval. Please contact admin.',
         400,
       );
+    }
 
-    if (user.status === 'block')
+    if (user.status === UserStatus.BLOCK) {
       throw new HttpException('Your account has been blocked by admin', 400);
+    }
 
-    const accessToken = this.jwtService.sign(
-      { id: user._id, email: user.email, role: user.role },
-      {
-        secret: config.jwt.accessTokenSecret,
-        expiresIn: config.jwt.accessTokenExpires as any,
-      } as jwt.JwtSignOptions,
-    );
-    const refreshToken = this.jwtService.sign(
-      { id: user._id, email: user.email, role: user.role },
-      {
-        secret: config.jwt.refreshTokenSecret,
-        expiresIn: config.jwt.refreshTokenExpires as any,
-      } as jwt.JwtSignOptions,
-    );
+    const payload = { id: user._id, email: user.email, role: user.role };
+
+    const accessToken = this.jwtService.sign(payload, {
+      secret: config.jwt.accessTokenSecret,
+      expiresIn: config.jwt.accessTokenExpires as any,
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: config.jwt.refreshTokenSecret,
+      expiresIn: config.jwt.refreshTokenExpires as any,
+    });
+
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: true,
@@ -75,7 +97,6 @@ export class AuthService {
   async forgotPassword(email: string) {
     const user = await this.userModel.findOne({ email });
     if (!user) throw new HttpException('Email not found', 404);
-
 
     const generateOtpNumber = Math.floor(100000 + Math.random() * 900000);
 
