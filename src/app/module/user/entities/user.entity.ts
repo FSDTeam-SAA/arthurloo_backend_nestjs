@@ -1,42 +1,27 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-export type UserDocument = HydratedDocument<User>;
 import * as bcrypt from 'bcrypt';
 import config from '../../config';
+import { UserRole, UserStatus } from '../user.constants';
+
+
+export type UserDocument = HydratedDocument<User>;
 
 @Schema({ timestamps: true })
 export class User {
-  @Prop({
-    required: [true, 'First name is required'],
-    trim: true,
-  })
+  @Prop({ required: true, trim: true })
   firstName: string;
 
-  @Prop({
-    required: [true, 'Last name is required'],
-    trim: true,
-  })
+  @Prop({ required: true, trim: true })
   lastName: string;
 
-  @Prop({
-    required: [true, 'Email is required'],
-    unique: true,
-    lowercase: true,
-    trim: true,
-  })
+  @Prop({ required: true, unique: true, lowercase: true, trim: true })
   email: string;
 
-  @Prop({
-    required: [true, 'Password is required'],
-    minlength: 6,
-    select: false,
-  })
+  @Prop({ required: true, minlength: 6, select: false })
   password: string;
 
-  @Prop({
-    enum: ['teacher', 'parent', 'student', 'admin'],
-    default: 'student',
-  })
+  @Prop({ enum: UserRole, default: UserRole.STUDENT })
   role: string;
 
   @Prop({ enum: ['male', 'female'] })
@@ -51,7 +36,7 @@ export class User {
   @Prop()
   profilePicture: string;
 
-  @Prop({ enum: ['panding', 'active', 'block'], default: 'active' })
+  @Prop({ enum: UserStatus, default: UserStatus.ACTIVE })
   status: string;
 
   @Prop()
@@ -69,7 +54,7 @@ export class User {
   @Prop()
   otpExpiry?: Date;
 
-  @Prop()
+  @Prop({ default: false })
   verifiedForget: boolean;
 
   @Prop()

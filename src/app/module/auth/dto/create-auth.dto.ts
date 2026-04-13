@@ -7,6 +7,7 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
+import { UserRole } from '../../user/user.constants';
 
 export class CreateAuthDto {
   @ApiProperty({ example: 'Saurav' })
@@ -14,7 +15,7 @@ export class CreateAuthDto {
   @IsNotEmpty({ message: 'First name is required' })
   firstName: string;
 
-  @ApiProperty({ example: 'Das' })
+  @ApiProperty({ example: 'Sarkar' })
   @IsString()
   @IsNotEmpty({ message: 'Last name is required' })
   lastName: string;
@@ -29,9 +30,9 @@ export class CreateAuthDto {
   @MinLength(6, { message: 'Password must be at least 6 characters' })
   password: string;
 
-  @ApiPropertyOptional({ example: 'teacther' })
+  @ApiPropertyOptional({ example: 'teacher' })
   @IsOptional()
-  @IsEnum(['student', 'teacher', 'parent', 'admin'])
+  @IsEnum(UserRole)
   role?: string;
 }
 
