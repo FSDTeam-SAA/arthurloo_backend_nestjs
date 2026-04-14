@@ -153,18 +153,18 @@ const attachObservationFiles = (
 const hasModuleData = (dto: CreateChildDto | UpdateChildDto): boolean =>
   Boolean(
     dto.module1Observations?.length ||
-      dto.module1Summary ||
-      dto.module2Section1ParticipationAttention ||
-      dto.module2Section2SensoryLearning ||
-      dto.module2Section3InteractionSocial ||
-      dto.module2Section4TaskHandling ||
-      dto.module2Summary ||
-      dto.module3HealthSelfCare ||
-      dto.module3Language ||
-      dto.module3Social ||
-      dto.module3ScienceDramaticPlay ||
-      dto.module3Arts ||
-      dto.module3Summary,
+    dto.module1Summary ||
+    dto.module2Section1ParticipationAttention ||
+    dto.module2Section2SensoryLearning ||
+    dto.module2Section3InteractionSocial ||
+    dto.module2Section4TaskHandling ||
+    dto.module2Summary ||
+    dto.module3HealthSelfCare ||
+    dto.module3Language ||
+    dto.module3Social ||
+    dto.module3ScienceDramaticPlay ||
+    dto.module3Arts ||
+    dto.module3Summary,
   );
 
 const triggerAllModuleAi = async (
@@ -190,8 +190,16 @@ const triggerAllModuleAi = async (
       module3Arts: child.module3Arts,
       module3Summary: child.module3Summary,
     });
+    const [personalityAndInterrestId, learningStyleId, abilityAssessmentId] =
+      runId;
     await childModel.findOneAndUpdate(whereConditions, {
-      $set: { module1MainRunId: runId, module2AiRunId: runId },
+      $set: {
+        personalityAndInterrestId,
+        learningStyleId,
+        abilityAssessmentId,
+        module1MainRunId: personalityAndInterrestId,
+        module2AiRunId: learningStyleId,
+      },
     });
     return runId;
   } catch (err: any) {
@@ -246,8 +254,9 @@ export class ChildrenService {
         result,
       );
       if (runId) {
-        result.module1MainRunId = runId;
-        result.module2AiRunId = runId;
+        result.personalityAndInterrestId = runId[0];
+        result.learningStyleId = runId[1];
+        result.abilityAssessmentId = runId[2];
       }
     }
 
@@ -354,8 +363,9 @@ export class ChildrenService {
         result,
       );
       if (runId && result) {
-        result.module1MainRunId = runId;
-        result.module2AiRunId = runId;
+        result.personalityAndInterrestId = runId[0];
+        result.learningStyleId = runId[1];
+        result.abilityAssessmentId = runId[2];
       }
     }
 

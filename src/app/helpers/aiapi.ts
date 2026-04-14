@@ -159,14 +159,40 @@ export const run_all_module = async (data: RunAllModulePayload) => {
     payload,
   );
 
-  if (!response.data?.run_id) {
-    throw new Error('AI API did not return a run_id');
+  const body: any = response.data ?? {};
+
+  // AI API 3 টা id return করে → [personalityAndInterrestId, learningStyleId, abilityAssessmentId]
+  const personalityAndInterrestId =
+    body.personality_and_interest_id ??
+    body.personalityAndInterrestId ??
+    body.personalityAndInterestId ??
+    body.personality_id ??
+    null;
+
+  const learningStyleId =
+    body.learning_style_id ??
+    body.learningStyleId ??
+    null;
+
+  const abilityAssessmentId =
+    body.ability_assessment_id ??
+    body.abilityAssessmentId ??
+    body.personal_ability_id ??
+    body.personalAbilityId ??
+    null;
+
+  if (!personalityAndInterrestId && !learningStyleId && !abilityAssessmentId) {
+    throw new Error('AI API did not return the expected IDs');
   }
 
   console.log(
-    'All-module AI workflow triggered successfully, run_id:',
-    response.data,
+    'All-module AI workflow triggered successfully, ids:',
+    { personalityAndInterrestId, learningStyleId, abilityAssessmentId },
   );
 
-  return response.data.run_id as string;
+  return [
+    personalityAndInterrestId,
+    learningStyleId,
+    abilityAssessmentId,
+  ] as [string, string, string];
 };
