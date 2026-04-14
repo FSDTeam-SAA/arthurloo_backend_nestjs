@@ -9,10 +9,7 @@ import { fileUpload } from 'src/app/helpers/fileUploder';
 import { IFilterParams } from 'src/app/helpers/pick';
 import paginationHelper, { IOptions } from 'src/app/helpers/pagenation';
 import buildWhereConditions from 'src/app/helpers/buildWhereConditions';
-import {
-  learning_style_data,
-  personality_and_interest,
-} from 'src/app/helpers/aiapi';
+import { run_all_module } from 'src/app/helpers/aiapi';
 
 const childSearchAbleFields = [
   'firstName',
@@ -94,21 +91,6 @@ const toDate = (value?: string | Date) => {
   return Number.isNaN(parsedDate.getTime()) ? undefined : parsedDate;
 };
 
-// const normalizeChildWritePayload = (
-//   payload: CreateChildDto | UpdateChildDto,
-// ): Partial<Child> => {
-//   const normalizedPayload = {
-//     ...payload,
-//     datoOfBirth: toDate(payload.datoOfBirth),
-//     startServiceDate: toDate(payload.startServiceDate),
-//     module1Observations: payload.module1Observations?.map((entry) => ({
-//       ...entry,
-//       observationDate: toDate(entry.observationDate),
-//     })),
-//   };
-//   return normalizedPayload as unknown as Partial<Child>;
-// };
-
 const normalizeChildWritePayload = (
   payload: CreateChildDto | UpdateChildDto,
 ): Partial<Child> => {
@@ -166,52 +148,54 @@ const attachObservationFiles = (
   payload.module1Observations = observations;
 };
 
-// ─── Shared AI trigger helper ─────────────────────────────────────────────────
+// ─── Shared helpers ───────────────────────────────────────────────────────────
 
-const triggerModule1Ai = async (
-  childModel: Model<ChildDocument>,
-  childId: any,
-  observations: any[],
-  summary: any,
-) => {
-  try {
-    const runId = await personality_and_interest(
-      observations ?? [],
-      summary ?? {},
-    );
-    await childModel.findByIdAndUpdate(childId, {
-      $set: { module1MainRunId: runId },
-    });
-    return runId;
-  } catch (err: any) {
-    console.error('Module1 AI workflow trigger failed:', err.message);
-    return null;
-  }
-};
+const hasModuleData = (dto: CreateChildDto | UpdateChildDto): boolean =>
+  Boolean(
+    dto.module1Observations?.length ||
+      dto.module1Summary ||
+      dto.module2Section1ParticipationAttention ||
+      dto.module2Section2SensoryLearning ||
+      dto.module2Section3InteractionSocial ||
+      dto.module2Section4TaskHandling ||
+      dto.module2Summary ||
+      dto.module3HealthSelfCare ||
+      dto.module3Language ||
+      dto.module3Social ||
+      dto.module3ScienceDramaticPlay ||
+      dto.module3Arts ||
+      dto.module3Summary,
+  );
 
-const triggerModule2Ai = async (
+const triggerAllModuleAi = async (
   childModel: Model<ChildDocument>,
   whereConditions: object,
-  section1: any,
-  section2: any,
-  section3: any,
-  section4: any,
-  summary: any,
+  child: Partial<Child> | null | undefined,
 ) => {
+  if (!child) return null;
   try {
-    const runId = await learning_style_data(
-      section1,
-      section2,
-      section3,
-      section4,
-      summary,
-    );
+    const runId = await run_all_module({
+      module1Observations: child.module1Observations ?? [],
+      module1Summary: child.module1Summary ?? {},
+      module2Section1ParticipationAttention:
+        child.module2Section1ParticipationAttention,
+      module2Section2SensoryLearning: child.module2Section2SensoryLearning,
+      module2Section3InteractionSocial: child.module2Section3InteractionSocial,
+      module2Section4TaskHandling: child.module2Section4TaskHandling,
+      module2Summary: child.module2Summary,
+      module3HealthSelfCare: child.module3HealthSelfCare,
+      module3Language: child.module3Language,
+      module3Social: child.module3Social,
+      module3ScienceDramaticPlay: child.module3ScienceDramaticPlay,
+      module3Arts: child.module3Arts,
+      module3Summary: child.module3Summary,
+    });
     await childModel.findOneAndUpdate(whereConditions, {
-      $set: { module2AiRunId: runId },
+      $set: { module1MainRunId: runId, module2AiRunId: runId },
     });
     return runId;
   } catch (err: any) {
-    console.error('Module2 AI workflow trigger failed:', err.message);
+    console.error('All-module AI workflow trigger failed:', err.message);
     return null;
   }
 };
@@ -223,154 +207,62 @@ export class ChildrenService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {}
 
-  // async addChildrient(
-  //   parentId: string,
-  //   createChildDto: CreateChildDto,
-  //   file?: Express.Multer.File,
-  //   observationAttachments?: Express.Multer.File[],
-  // ) {
-  //   const parent = await this.userModel.findById(parentId);
-  //   if (!parent) throw new HttpException('Parent not found', 404);
-
-  //   if (file) {
-  //     const uploadedFile = await fileUpload.uploadToCloudinary(file);
-  //     createChildDto.profilePicture = uploadedFile.url;
-  //   }
-
-  //   const attachmentUrls = await uploadFilesToUrls(observationAttachments);
-  //   attachObservationFiles(createChildDto, attachmentUrls);
-
-  //   const lastChild = await this.childModel
-  //     .findOne({})
-  //     .sort({ createdAt: -1 })
-  //     .select('studentId');
-
-  //   let nextId = 1001;
-  //   if (lastChild?.studentId) {
-  //     const numericPart = parseInt(lastChild.studentId.replace('STU-', ''), 10);
-  //     nextId = numericPart + 1;
-  //   }
-  //   createChildDto.studentId = `STU-${nextId}`;
-
-  //   parseChildMeasurements(createChildDto);
-  //   parseModuleFields(createChildDto);
-
-  //   const childPayload = {
-  //     ...normalizeChildWritePayload(createChildDto),
-  //     parentId: parent._id as Types.ObjectId,
-  //   };
-
-  //   const result = await this.childModel.create(childPayload);
-
-  //   // ── Module 1 AI call ──────────────────────────────────────────────────────
-  //   if (createChildDto.module1Observations?.length || createChildDto.module1Summary) {
-  //     const runId = await triggerModule1Ai(
-  //       this.childModel,
-  //       result._id,
-  //       result.module1Observations,
-  //       result.module1Summary,
-  //     );
-  //     if (runId) result.module1MainRunId = runId;
-  //   }
-
-  //   // ── Module 2 AI call ──────────────────────────────────────────────────────
-  //   if (
-  //     createChildDto.module2Section1ParticipationAttention ||  // ✅ createChildDto (bug fix)
-  //     createChildDto.module2Section2SensoryLearning ||
-  //     createChildDto.module2Section3InteractionSocial ||
-  //     createChildDto.module2Section4TaskHandling ||
-  //     createChildDto.module2Summary
-  //   ) {
-  //     const runId = await triggerModule2Ai(
-  //       this.childModel,
-  //       { _id: result._id },
-  //       result.module2Section1ParticipationAttention,
-  //       result.module2Section2SensoryLearning,
-  //       result.module2Section3InteractionSocial,
-  //       result.module2Section4TaskHandling,
-  //       result.module2Summary,
-  //     );
-  //     if (runId) result.module2AiRunId = runId;
-  //   }
-
-  //   return result;
-  // }
-
   async addChildrient(
     parentId: string,
-    createChildDto: CreateChildDto,
-    file?: Express.Multer.File,
-    observationAttachments?: Express.Multer.File[],
+    dto: CreateChildDto,
+    profileFile?: Express.Multer.File,
+    observationFiles?: Express.Multer.File[],
   ) {
+    // 1. Parent check
     const parent = await this.userModel.findById(parentId);
     if (!parent) throw new HttpException('Parent not found', 404);
 
-    if (file) {
-      const uploadedFile = await fileUpload.uploadToCloudinary(file);
-      createChildDto.profilePicture = uploadedFile.url;
+    // 2. Profile picture upload
+    if (profileFile) {
+      const uploaded = await fileUpload.uploadToCloudinary(profileFile);
+      dto.profilePicture = uploaded.url;
     }
 
-    // ✅ আগে parse করো, তারপর file attach করো
-    parseChildMeasurements(createChildDto);
-    parseModuleFields(createChildDto);
+    // 3. Parse JSON fields + attach observation files
+    parseChildMeasurements(dto);
+    parseModuleFields(dto);
+    const attachmentUrls = await uploadFilesToUrls(observationFiles);
+    attachObservationFiles(dto, attachmentUrls);
 
-    const attachmentUrls = await uploadFilesToUrls(observationAttachments);
-    attachObservationFiles(createChildDto, attachmentUrls);
+    // 4. Auto-generate studentId
+    dto.studentId = await this.generateStudentId();
 
-    const lastChild = await this.childModel
-      .findOne({})
-      .sort({ createdAt: -1 })
-      .select('studentId');
-
-    let nextId = 1001;
-    if (lastChild?.studentId) {
-      const numericPart = parseInt(lastChild.studentId.replace('STU-', ''), 10);
-      nextId = numericPart + 1;
-    }
-    createChildDto.studentId = `STU-${nextId}`;
-
-    const childPayload = {
-      ...normalizeChildWritePayload(createChildDto),
+    // 5. Save child
+    const result = await this.childModel.create({
+      ...normalizeChildWritePayload(dto),
       parentId: parent._id as Types.ObjectId,
-    };
+    });
 
-    const result = await this.childModel.create(childPayload);
-
-    // Module 1 AI call
-    if (
-      createChildDto.module1Observations?.length ||
-      createChildDto.module1Summary
-    ) {
-      const runId = await triggerModule1Ai(
-        this.childModel,
-        result._id,
-        result.module1Observations,
-        result.module1Summary,
-      );
-      if (runId) result.module1MainRunId = runId;
-    }
-
-    // Module 2 AI call
-    if (
-      createChildDto.module2Section1ParticipationAttention ||
-      createChildDto.module2Section2SensoryLearning ||
-      createChildDto.module2Section3InteractionSocial ||
-      createChildDto.module2Section4TaskHandling ||
-      createChildDto.module2Summary
-    ) {
-      const runId = await triggerModule2Ai(
+    // 6. Trigger AI (only if any module data exists)
+    if (hasModuleData(dto)) {
+      const runId = await triggerAllModuleAi(
         this.childModel,
         { _id: result._id },
-        result.module2Section1ParticipationAttention,
-        result.module2Section2SensoryLearning,
-        result.module2Section3InteractionSocial,
-        result.module2Section4TaskHandling,
-        result.module2Summary,
+        result,
       );
-      if (runId) result.module2AiRunId = runId;
+      if (runId) {
+        result.module1MainRunId = runId;
+        result.module2AiRunId = runId;
+      }
     }
 
     return result;
+  }
+
+  private async generateStudentId(): Promise<string> {
+    const last = await this.childModel
+      .findOne({})
+      .sort({ createdAt: -1 })
+      .select('studentId');
+    const lastNum = last?.studentId
+      ? parseInt(last.studentId.replace('STU-', ''), 10)
+      : 1000;
+    return `STU-${lastNum + 1}`;
   }
 
   async getAllChildren(params: IFilterParams, options: IOptions) {
@@ -432,15 +324,16 @@ export class ChildrenService {
       updateChildDto.profilePicture = uploadedFile.url;
     }
 
+    // ✅ আগে parse করো, তারপর file attach করো (addChildrient এর সাথে consistent)
+    parseChildMeasurements(updateChildDto);
+    parseModuleFields(updateChildDto);
+
     const attachmentUrls = await uploadFilesToUrls(observationAttachments);
     attachObservationFiles(
       updateChildDto,
       attachmentUrls,
       child.module1Observations,
     );
-
-    parseChildMeasurements(updateChildDto);
-    parseModuleFields(updateChildDto);
 
     const normalizedUpdatePayload = normalizeChildWritePayload(updateChildDto);
 
@@ -453,38 +346,17 @@ export class ChildrenService {
       { new: true },
     );
 
-    // ── Module 1 AI call ──────────────────────────────────────────────────────
-    if (
-      updateChildDto.module1Observations?.length ||
-      updateChildDto.module1Summary
-    ) {
-      const runId = await triggerModule1Ai(
-        this.childModel,
-        result?._id,
-        result?.module1Observations ?? [],
-        result?.module1Summary ?? {},
-      );
-      if (runId && result) result.module1MainRunId = runId;
-    }
-
-    // ── Module 2 AI call ──────────────────────────────────────────────────────
-    if (
-      updateChildDto.module2Section1ParticipationAttention ||
-      updateChildDto.module2Section2SensoryLearning ||
-      updateChildDto.module2Section3InteractionSocial ||
-      updateChildDto.module2Section4TaskHandling ||
-      updateChildDto.module2Summary
-    ) {
-      const runId = await triggerModule2Ai(
+    // ── Single All-Module AI call ────────────────────────────────────────────
+    if (hasModuleData(updateChildDto)) {
+      const runId = await triggerAllModuleAi(
         this.childModel,
         whereConditions,
-        result?.module2Section1ParticipationAttention,
-        result?.module2Section2SensoryLearning,
-        result?.module2Section3InteractionSocial,
-        result?.module2Section4TaskHandling,
-        result?.module2Summary,
+        result,
       );
-      if (runId && result) result.module2AiRunId = runId;
+      if (runId && result) {
+        result.module1MainRunId = runId;
+        result.module2AiRunId = runId;
+      }
     }
 
     return result;
