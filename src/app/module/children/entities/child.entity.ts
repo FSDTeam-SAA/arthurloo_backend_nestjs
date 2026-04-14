@@ -246,6 +246,17 @@ export class Child {
 
   @Prop({ type: Object })
   module3Summary!: Module3Summary;
+
+  // ── Module 4: AI Generated IDs ───────────────────────────────
+
+  @Prop({ default: null })
+  personalityAndInterrestId!: string;
+
+  @Prop({ default: null })
+  learningStyleId!: string;
+
+  @Prop({ default: null })
+  abilityAssessmentId!: string;
 }
 
 export const ChildSchema = SchemaFactory.createForClass(Child);
