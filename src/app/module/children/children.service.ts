@@ -190,14 +190,14 @@ const triggerAllModuleAi = async (
       module3Arts: child.module3Arts,
       module3Summary: child.module3Summary,
     });
-    const [personalityAndInterrestId, learningStyleId, abilityAssessmentId] =
+    const [personalityAndInterestId, learningStyleId, abilityAssessmentId] =
       runId;
     await childModel.findOneAndUpdate(whereConditions, {
       $set: {
-        personalityAndInterrestId,
-        learningStyleId,
-        abilityAssessmentId,
-        module1MainRunId: personalityAndInterrestId,
+        personality_and_interest: personalityAndInterestId,
+        learning_style: learningStyleId,
+        personal_ability: abilityAssessmentId,
+        module1MainRunId: personalityAndInterestId,
         module2AiRunId: learningStyleId,
       },
     });
@@ -254,12 +254,11 @@ export class ChildrenService {
         result,
       );
       if (runId) {
-        result.personalityAndInterrestId = runId[0];
-        result.learningStyleId = runId[1];
-        result.abilityAssessmentId = runId[2];
+        result.personality_and_interest = runId[0];
+        result.learning_style = runId[1];
+        result.personal_ability = runId[2];
       }
     }
-
     return result;
   }
 
@@ -363,9 +362,9 @@ export class ChildrenService {
         result,
       );
       if (runId && result) {
-        result.personalityAndInterrestId = runId[0];
-        result.learningStyleId = runId[1];
-        result.abilityAssessmentId = runId[2];
+        result.personality_and_interest = runId[0];
+        result.learning_style = runId[1];
+        result.personal_ability = runId[2];
       }
     }
 

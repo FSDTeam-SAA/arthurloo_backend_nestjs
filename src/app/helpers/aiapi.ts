@@ -28,7 +28,6 @@ export const run_all_module = async (data: RunAllModulePayload) => {
     personality_and_interest_data: {
       module1Observations: data.module1Observations,
       module1Summary: data.module1Summary,
-      // observation fields flat করে পাঠাও
       observationContext: observation.observationContext,
       observationDate: observation.observationDate,
       mainPersonalityTraits: observation.mainPersonalityTraits,
@@ -37,7 +36,6 @@ export const run_all_module = async (data: RunAllModulePayload) => {
       motivationEngagementTriggers: observation.motivationEngagementTriggers,
       recorderName: observation.recorderName,
       attachments: observation.attachments,
-      // summary fields flat করে পাঠাও
       strengthsNotableTraits: data.module1Summary?.strengthsNotableTraits,
       areasNeedingSupport: data.module1Summary?.areasNeedingSupport,
       mainInterestsPreferences: data.module1Summary?.mainInterestsPreferences,
@@ -60,7 +58,8 @@ export const run_all_module = async (data: RunAllModulePayload) => {
         data.module2Section1ParticipationAttention?.initiativeDailyRoutines,
 
       // Section 2 — Sensory Learning
-      learnsThroughTouch: data.module2Section2SensoryLearning?.learnsThroughTouch,
+      learnsThroughTouch:
+        data.module2Section2SensoryLearning?.learnsThroughTouch,
       learnsThroughVisual:
         data.module2Section2SensoryLearning?.learnsThroughVisual,
       learnsThroughListening:
@@ -159,40 +158,27 @@ export const run_all_module = async (data: RunAllModulePayload) => {
     payload,
   );
 
-  const body: any = response.data ?? {};
+  // ── Extract run IDs from response ─────────────────────────────────────────
+  // API returns: { status: true, status_code: 200, run_id: [pi_id, ls_id, pa_id] }
+  const raw = response.data;
+  const runIds: string[] = Array.isArray(raw?.run_id) ? raw.run_id : [];
 
-  // AI API 3 টা id return করে → [personalityAndInterrestId, learningStyleId, abilityAssessmentId]
-  const personalityAndInterrestId =
-    body.personality_and_interest_id ??
-    body.personalityAndInterrestId ??
-    body.personalityAndInterestId ??
-    body.personality_id ??
-    null;
-
-  const learningStyleId =
-    body.learning_style_id ??
-    body.learningStyleId ??
-    null;
-
-  const abilityAssessmentId =
-    body.ability_assessment_id ??
-    body.abilityAssessmentId ??
-    body.personal_ability_id ??
-    body.personalAbilityId ??
-    null;
-
-  if (!personalityAndInterrestId && !learningStyleId && !abilityAssessmentId) {
+  if (runIds.length < 3) {
+    console.error('AI API did not return 3 run IDs. Raw response:', JSON.stringify(raw, null, 2));
     throw new Error('AI API did not return the expected IDs');
   }
 
-  console.log(
-    'All-module AI workflow triggered successfully, ids:',
-    { personalityAndInterrestId, learningStyleId, abilityAssessmentId },
-  );
+  const [personalityAndInterestId, learningStyleId, abilityAssessmentId] = runIds;
 
-  return [
-    personalityAndInterrestId,
+  console.log('All-module AI workflow triggered successfully, ids:', {
+    personalityAndInterestId,
     learningStyleId,
     abilityAssessmentId,
-  ] as [string, string, string];
+  });
+
+  return [personalityAndInterestId, learningStyleId, abilityAssessmentId] as [
+    string,
+    string,
+    string,
+  ];
 };
