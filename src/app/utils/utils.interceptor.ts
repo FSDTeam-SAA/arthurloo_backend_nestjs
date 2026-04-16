@@ -30,9 +30,9 @@ export class UtilsInterceptor implements NestInterceptor {
         return {
           statusCode: res.statusCode,
           success: res.statusCode >= 200 && res.statusCode < 300,
-          message: response.meta ?? `Request successfully completed`,
-          meta: response.data,
-          data: response,
+          message: response?.meta ?? `Request successfully completed`,
+          meta: response?.data,
+          data: response ?? null,
         };
       }),
       catchError((error) => throwError(() => error)),

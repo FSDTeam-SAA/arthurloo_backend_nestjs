@@ -164,11 +164,15 @@ export const run_all_module = async (data: RunAllModulePayload) => {
   const runIds: string[] = Array.isArray(raw?.run_id) ? raw.run_id : [];
 
   if (runIds.length < 3) {
-    console.error('AI API did not return 3 run IDs. Raw response:', JSON.stringify(raw, null, 2));
+    console.error(
+      'AI API did not return 3 run IDs. Raw response:',
+      JSON.stringify(raw, null, 2),
+    );
     throw new Error('AI API did not return the expected IDs');
   }
 
-  const [personalityAndInterestId, learningStyleId, abilityAssessmentId] = runIds;
+  const [personalityAndInterestId, learningStyleId, abilityAssessmentId] =
+    runIds;
 
   console.log('All-module AI workflow triggered successfully, ids:', {
     personalityAndInterestId,
@@ -181,4 +185,15 @@ export const run_all_module = async (data: RunAllModulePayload) => {
     string,
     string,
   ];
+};
+
+export const getAiResponse = async (runId: string) => {
+  const response = await axios.get(
+    `https://arthurloo.onrender.com/api/ai/v1/workflow/retrive-data/report/${runId}/`,
+  );
+  if (!response.data.status) {
+    throw new Error('AI API did not return the expected IDs');
+  }
+  // console.log(response.data);
+  return response.data;
 };

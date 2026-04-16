@@ -377,4 +377,25 @@ export class ChildrenService {
     if (!child) throw new HttpException('Child not found', 404);
     return this.childModel.findOneAndDelete(whereConditions);
   }
+
+  async getMyChildren(
+    parentId: string,
+    params: IFilterParams,
+    options: IOptions,
+  ) {
+    const { limit, page, skip, sortBy, sortOrder } = paginationHelper(options);
+    const whereConditions = buildWhereConditions(
+      params,
+      childSearchAbleFields,
+      { parentId },
+    );
+    const result = await this.childModel
+      .find(whereConditions)
+      .populate('parentId')
+      .sort({ [sortBy]: sortOrder } as any)
+      .skip(skip)
+      .limit(limit);
+    const total = await this.childModel.countDocuments(whereConditions);
+    return { meta: { total, page, limit }, data: result };
+  }
 }

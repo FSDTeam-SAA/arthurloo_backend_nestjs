@@ -113,7 +113,63 @@ export class ChildrenController {
     ]);
     const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
     const result = await this.childrenService.getAllChildren(params, options);
-    return { message: 'Children fetched successfully', meta: result.meta, data: result.data };
+    return {
+      message: 'Children fetched successfully',
+      meta: result.meta,
+      data: result.data,
+    };
+  }
+
+  @Get('my-children')
+  @ApiOperation({ summary: 'Get all children (admin / teacher)' })
+  @ApiBearerAuth('access-token')
+  @ApiQuery({ name: 'searchTerm', required: false, type: String })
+  @ApiQuery({ name: 'firstName', required: false, type: String })
+  @ApiQuery({ name: 'lastName', required: false, type: String })
+  @ApiQuery({ name: 'gender', required: false, type: String })
+  @ApiQuery({ name: 'schoolName', required: false, type: String })
+  @ApiQuery({ name: 'class', required: false, type: String })
+  @ApiQuery({ name: 'nickName', required: false, type: String })
+  @ApiQuery({ name: 'primaryLanguage', required: false, type: String })
+  @ApiQuery({ name: 'homeLanguage', required: false, type: String })
+  @ApiQuery({ name: 'serviceStage', required: false, type: String })
+  @ApiQuery({ name: 'currentPlanType', required: false, type: String })
+  @ApiQuery({ name: 'topPriority', required: false, type: String })
+  @ApiQuery({ name: 'studentId', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'sortBy', required: false, type: String })
+  @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'] })
+  @UseGuards(AuthGuard('parent'))
+  @HttpCode(HttpStatus.OK)
+  async getMyChildren(@Req() req: Request) {
+    const params = pick(req.query, [
+      'searchTerm',
+      'firstName',
+      'lastName',
+      'gender',
+      'schoolName',
+      'class',
+      'nickName',
+      'primaryLanguage',
+      'homeLanguage',
+      'serviceStage',
+      'currentPlanType',
+      'topPriority',
+      'studentId',
+    ]);
+    const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
+    const parantId = req.user!.id;
+    const result = await this.childrenService.getMyChildren(
+      parantId,
+      params,
+      options,
+    );
+    return {
+      message: 'Children fetched successfully',
+      meta: result.meta,
+      data: result.data,
+    };
   }
 
   // ── GET /children/my-children ──────────────────────────────────────────────
@@ -149,7 +205,11 @@ export class ChildrenController {
       params,
       options,
     );
-    return { message: 'My children fetched successfully', meta: result.meta, data: result.data };
+    return {
+      message: 'My children fetched successfully',
+      meta: result.meta,
+      data: result.data,
+    };
   }
 
   // ── GET /children/:id ──────────────────────────────────────────────────────

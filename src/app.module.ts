@@ -8,6 +8,7 @@ import { AuthModule } from './app/module/auth/auth.module';
 import { ChildrenModule } from './app/module/children/children.module';
 import { ShearChildModule } from './app/module/shear-child/shear-child.module';
 import { DashboardModule } from './app/module/dashboard/dashboard.module';
+import { ChildInsightsModule } from './app/module/child_insights/child_insights.module';
 import config from './app/module/config';
 
 @Module({
@@ -19,6 +20,7 @@ import config from './app/module/config';
     ChildrenModule,
     ShearChildModule,
     DashboardModule,
+    ChildInsightsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
